@@ -125,7 +125,7 @@ class Request(object):
                 resp = await self.session.request(method_type, path, data=data, timeout=self.timeout)
             elif params:
                 params = self.get_choice(params)
-                resp = await self.session.request(method_type, path, payload=params, timeout=self.timeout)
+                resp = await self.session.request(method_type, path, params=params, timeout=self.timeout)
             else:
                 resp = await self.session.request(method_type, path)
         except asyncio.TimeoutError:

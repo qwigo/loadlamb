@@ -109,3 +109,6 @@ ved/
 
 # Claude Code worktrees and session data
 .claude/
+
+# User-generated project config (never commit)
+loadlamb.yaml

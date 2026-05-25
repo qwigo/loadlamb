@@ -58,6 +58,7 @@ def test_create_extension_template():
                                                  'url': 'http://flask:5000', 'user_batch_size': 10,
                                                  'user_batch_sleep': 2, 'user_num': 10, 'extensions': ['jelly']}
     shutil.rmtree('jelly')
+    os.remove('loadlamb.yaml')
 
 
 # Issue #1 — yaml.safe_load must be used in read_config_file

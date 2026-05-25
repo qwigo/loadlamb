@@ -228,7 +228,7 @@ class Deploy(object):
                 try:
                     dets = self.s.cf_resource.Stack('loadlamb-bucket')
                     bucket_name = list(filter(lambda x: x.get('OutputKey') == 'bucket', dets.outputs))[0]['OutputValue']
-                except:
+                except Exception:
                     dets = self.s3t.publish('loadlamb-bucket')
                     bucket_name = list(filter(lambda x: x.get('OutputKey') == 'bucket', dets.outputs))[0]['OutputValue']
                 print('Publishing LoadLamb Code in {} region.'.format(i))
@@ -246,8 +246,8 @@ class Deploy(object):
             docb_handler.publish_global('loadlamb', 'loadlambddb', 'loadlambddb', 'dynamodb',
                                         replication_groups=regions,
                                         profile_name=self.profile_name)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f'Warning: DynamoDB global table creation failed: {e}')
 
     def unpublish(self):
         self.r.unpublish('loadlamb-role')

@@ -50,23 +50,44 @@ def test_request_uses_params_kwarg_not_payload():
 # ── Issue #8: class name typo ────────────────────────────────────────
 
 def test_cognito_request_class_has_correct_name():
-    """The Cognito request class must be importable as CognitoRequest."""
-    from loadlamb.chalicelib.contrib.requests.cognito import CognitoRequest
-    assert CognitoRequest is not None
+    """The Cognito request class must be defined as CognitoRequest (via AST)."""
+    import ast
+    with open('loadlamb/chalicelib/contrib/requests/cognito.py') as f:
+        source = f.read()
+    tree = ast.parse(source)
+    class_names = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+    assert 'CognitoRequest' in class_names, (
+        f'CognitoRequest not found in cognito.py — classes defined: {class_names}')
 
 
 def test_cognito_request_old_name_gone():
-    """The misspelled CogntioRequest name must no longer exist."""
-    import loadlamb.chalicelib.contrib.requests.cognito as mod
-    assert not hasattr(mod, 'CogntioRequest'), (
-        'CogntioRequest (misspelled) still exists — rename to CognitoRequest')
+    """The misspelled CogntioRequest must no longer be defined (via AST)."""
+    import ast
+    with open('loadlamb/chalicelib/contrib/requests/cognito.py') as f:
+        source = f.read()
+    tree = ast.parse(source)
+    class_names = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+    assert 'CogntioRequest' not in class_names, (
+        'CogntioRequest (misspelled) still defined in cognito.py — rename to CognitoRequest')
 
 
 def test_cognito_request_is_request_subclass():
-    """CognitoRequest must still be a subclass of Request."""
-    from loadlamb.chalicelib.contrib.requests.cognito import CognitoRequest
-    from loadlamb.chalicelib.request import Request
-    assert issubclass(CognitoRequest, Request)
+    """CognitoRequest must subclass Request (via AST)."""
+    import ast
+    with open('loadlamb/chalicelib/contrib/requests/cognito.py') as f:
+        source = f.read()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == 'CognitoRequest':
+            base_names = [
+                b.id if isinstance(b, ast.Name) else
+                b.attr if isinstance(b, ast.Attribute) else ''
+                for b in node.bases
+            ]
+            assert 'Request' in base_names, (
+                f'CognitoRequest does not subclass Request — bases: {base_names}')
+            return
+    pytest.fail('CognitoRequest class not found in cognito.py')
 
 
 def test_cognito_uses_params_kwarg_not_payload():

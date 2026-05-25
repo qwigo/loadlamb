@@ -40,7 +40,8 @@ class Group(object):
         end_time = time.perf_counter()
 
         elapsed_time = end_time - start_time
-        requests_per_second = self.no_users / elapsed_time
+        total_requests = self.no_users * len(self.config.get('tasks', []))
+        requests_per_second = total_requests / elapsed_time
         results = list(itertools.chain.from_iterable(results))
 
         g = GroupModel(project_slug=self.config['project_slug'], run_slug=self.config['run_slug'],

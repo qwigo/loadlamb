@@ -3,7 +3,7 @@ import random
 import time
 
 from loadlamb.chalicelib.request import Request
-from loadlamb.response import Response
+from loadlamb.chalicelib.response import Response
 from loadlamb.chalicelib.utils import get_form_values, get_csrf_token
 
 

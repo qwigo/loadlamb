@@ -4,6 +4,8 @@ import itertools
 import json
 import os
 import shutil
+import subprocess
+import sys
 import time
 
 import base58
@@ -14,7 +16,6 @@ import boto3
 import jinja2
 
 import yaml
-from pip._internal import main as _main
 from bs4 import BeautifulSoup
 from unipath import FSPath as path
 import sammy as sm
@@ -77,6 +78,11 @@ def import_util(imp):
     return getattr(mod, obj_name)
 
 
+def _pip_install(args):
+    """Install pip packages using the current Python executable's pip module."""
+    subprocess.run([sys.executable, '-m', 'pip'] + args, check=True)
+
+
 def create_config_file(config, filename='loadlamb.yaml'):
     with open(filename, 'w+') as f:
         f.write(yaml.safe_dump(config, default_flow_style=False))
@@ -84,7 +90,7 @@ def create_config_file(config, filename='loadlamb.yaml'):
 
 def read_config_file(config_file=None):
     with open(config_file or 'loadlamb.yaml', 'r') as f:
-        c = yaml.load(f.read())
+        c = yaml.safe_load(f.read())
     return c
 
 
@@ -165,15 +171,15 @@ class Deploy(object):
         """
         if not ext_name:
             # If there is no extension name we can assume we are installing loadlamb's requirements
-            _main(['install', '-r',
-                   '{}/{}'.format(self.get_loadlamb_path(), self.requirements_filename),
-                   '-t', self.venv])
+            _pip_install(['install', '-r',
+                          '{}/{}'.format(self.get_loadlamb_path(), self.requirements_filename),
+                          '-t', self.venv])
         elif ext_name:
 
             # If there is an extension name we can assumme it is for an extension
-            _main(['install',
-                   '{}/'.format(ext_name),
-                   '-t', self.venv, '--src', '{}/_src'.format(self.venv)])
+            _pip_install(['install',
+                          '{}/'.format(ext_name),
+                          '-t', self.venv, '--src', '{}/_src'.format(self.venv)])
 
     def remove_zip_venv(self):
         self.remove_venv()

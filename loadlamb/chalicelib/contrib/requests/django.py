@@ -32,5 +32,5 @@ class DjangoPost(Request):
         resp = Response(b, self.req_config,
                         self.proj_config.get('project_slug'),
                         self.proj_config.get('run_slug'), time_taken, self.user_no, self.group_no)
-        resp.assert_contains()
+        await resp.assert_contains()
         return await resp.get_ltr()

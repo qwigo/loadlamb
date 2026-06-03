@@ -21,6 +21,10 @@ from unipath import FSPath as path
 import sammy as sm
 
 import loadlamb
+from loadlamb.chalicelib.constants import (
+    LAMBDA_FUNCTION_NAME, IAM_ROLE_NAME, S3_STACK_NAME,
+    DYNAMODB_TABLE_NAME, CF_STACK_NAME,
+)
 from loadlamb.chalicelib.contrib.db.loading import docb_handler
 
 from loadlamb.chalicelib.sam import s, r, s3t
@@ -33,12 +37,12 @@ CLI_TEMPLATES = jinja2.Environment(loader=jinja2.PackageLoader(
 
 async def get_form_values(resp):
     content = await resp.text()
-    form_children = list(filter(lambda x: hasattr(x, 'get'), list(BeautifulSoup(content).find('form').children)))
+    form_children = list(filter(lambda x: hasattr(x, 'get'), list(BeautifulSoup(content, 'html.parser').find('form').children)))
     return {i.get('name'): i.get('value') for i in form_children if i.get('type') == 'hidden'}
 
 
 async def get_form_action(resp):
-    return BeautifulSoup(await resp.text()).find('form').attrs['action']
+    return BeautifulSoup(await resp.text(), 'html.parser').find('form').attrs['action']
 
 
 def get_csrf_token(resp):
@@ -134,7 +138,7 @@ def execute_loadlamb(stage, region_name=None, config_file=None, profile_name='de
     config['active_stage'] = stage
     lm = sess.client('lambda', region_name=region_name)
     lm.invoke(
-        FunctionName='loadlamb-run',
+        FunctionName=LAMBDA_FUNCTION_NAME,
         InvocationType='Event',
         Payload=json.dumps(config),
     )
@@ -220,40 +224,40 @@ class Deploy(object):
         self.create_package_name()
         self.create_package()
         print('Publishing Loadlamb Role')
-        self.r.publish('loadlamb-role')
+        self.r.publish(IAM_ROLE_NAME)
 
         try:
             for i in regions:
                 self.build_clients_resources(profile_name=self.profile_name, region_name=i)
                 try:
-                    dets = self.s.cf_resource.Stack('loadlamb-bucket')
+                    dets = self.s.cf_resource.Stack(S3_STACK_NAME)
                     bucket_name = list(filter(lambda x: x.get('OutputKey') == 'bucket', dets.outputs))[0]['OutputValue']
                 except Exception:
-                    dets = self.s3t.publish('loadlamb-bucket')
+                    dets = self.s3t.publish(S3_STACK_NAME)
                     bucket_name = list(filter(lambda x: x.get('OutputKey') == 'bucket', dets.outputs))[0]['OutputValue']
                 print('Publishing LoadLamb Code in {} region.'.format(i))
                 # Upload the zip file to the specified bucket in the project config
                 self.upload_zip(bucket_name)
                 loadlamb_config = 'load-lamb-{}.yaml'.format(datetime.datetime.now())
                 self.s.publish_template(bucket_name, loadlamb_config)
-                self.s.publish('loadlamb', CodeBucket=bucket_name, CodeZipKey=self.zip_name)
+                self.s.publish(CF_STACK_NAME, CodeBucket=bucket_name, CodeZipKey=self.zip_name)
         except Exception as e:
             self.remove_zip_venv()
             raise sm.DeployFailedError(e)
         self.remove_zip_venv()
         # TODO: Add profile_name to publish_global in DocB
         try:
-            docb_handler.publish_global('loadlamb', 'loadlambddb', 'loadlambddb', 'dynamodb',
+            docb_handler.publish_global(CF_STACK_NAME, DYNAMODB_TABLE_NAME, DYNAMODB_TABLE_NAME, 'dynamodb',
                                         replication_groups=regions,
                                         profile_name=self.profile_name)
         except Exception as e:
             print(f'Warning: DynamoDB global table creation failed: {e}')
 
     def unpublish(self):
-        self.r.unpublish('loadlamb-role')
+        self.r.unpublish(IAM_ROLE_NAME)
         for i in self.regions:
             self.build_clients_resources(profile_name=self.profile_name, region_name=i)
-            self.s.unpublish('loadlamb')
+            self.s.unpublish(CF_STACK_NAME)
 
     def get_loadlamb_path(self, imodule=loadlamb.chalicelib, ancestor=0):
         """

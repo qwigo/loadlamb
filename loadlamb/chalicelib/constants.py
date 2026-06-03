@@ -1,0 +1,5 @@
+LAMBDA_FUNCTION_NAME = 'loadlamb-run'
+IAM_ROLE_NAME = 'loadlamb-role'
+S3_STACK_NAME = 'loadlamb-bucket'
+DYNAMODB_TABLE_NAME = 'loadlambddb'
+CF_STACK_NAME = 'loadlamb'

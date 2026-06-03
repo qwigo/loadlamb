@@ -58,7 +58,7 @@ class LoadLamb(object):
                 results = await asyncio.gather(
                     *[Group(no_users, session, self.config, group_no).run() for group_no, no_users in list(
                         enumerate(grouper(self.config.get('user_batch_size'), self.config.get('user_num')), 1))])
-            except concurrent.futures._base.TimeoutError:
+            except (asyncio.TimeoutError, concurrent.futures.TimeoutError):
                 return {
                     'failure': 'Timeout'
                 }

@@ -11,18 +11,23 @@ class Response(object):
         self.user_no = user_no
         self.group_no = group_no
 
+    async def _get_text(self):
+        if not hasattr(self, '_text'):
+            self._text = await self.response.text()
+        return self._text
+
     async def assert_contains(self):
         try:
             contains = self.request_config['contains']
         except KeyError:
             return True
-        self.text = await self.response.text()
+        self.text = await self._get_text()
         return contains in str(self.text)
 
     async def get_ltr(self):
         return LoadTestResponse(
             run_slug=self.run_slug,
-            body=await self.response.text(),
+            body=await self._get_text(),
             user_no=self.user_no,
             group_no=self.group_no,
             project_slug=self.project_slug,

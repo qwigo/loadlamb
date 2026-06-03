@@ -8,7 +8,7 @@ from loadlamb.chalicelib.response import Response
 from warrant_lite import WarrantLite
 
 
-class CogntioRequest(Request):
+class CognitoRequest(Request):
 
     def get_timeout(self):
         return self.req_config.get('timeout') or \
@@ -46,7 +46,7 @@ class CogntioRequest(Request):
                 resp = await self.session.request(method_type, path, headers=headers, json=data, timeout=self.timeout)
             elif params:
                 params = self.get_choice(params)
-                resp = await self.session.request(method_type, path, headers=headers, payload=params,
+                resp = await self.session.request(method_type, path, headers=headers, params=params,
                                                   timeout=self.timeout)
             else:
                 resp = await self.session.request(method_type, path, headers=headers)

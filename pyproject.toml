@@ -21,7 +21,7 @@ sammy = "^0.4.3"
 unipath = "^1.1"
 warrant-lite = "^1.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 Django = "^2.2"
 flask = "^1.0"
 pytest = "^4.5"

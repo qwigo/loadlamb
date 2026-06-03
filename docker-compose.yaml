@@ -1,6 +1,13 @@
 version: '3.5'
 
 services:
+  floci:
+    image: floci/floci:latest
+    ports:
+      - "4566:4566"
+    environment:
+      FLOCI_HOSTNAME: floci
+
   flask:
     restart: always
     build: .
@@ -8,7 +15,7 @@ services:
       - 5000:5000
     volumes:
       - .:/code/loadlamb
-    command: /root/.cache/pypoetry/virtualenvs/loadlamb-py3.6/bin/flask run -h 0.0.0.0
+    command: poetry run flask run -h 0.0.0.0
     env_file: .env
     working_dir: /code/loadlamb/loadlamb/chalicelib/tests/wsgi/flaskr/
 
@@ -23,22 +30,28 @@ services:
       - .:/code/loadlamb
     env_file: .env
     working_dir: /code/loadlamb/loadlamb/
-    command: /root/.cache/pypoetry/virtualenvs/loadlamb-py3.6/bin/chalice local --host 0.0.0.0 --port 7000
+    command: poetry run chalice local --host 0.0.0.0 --port 7000
 
   unittest:
     restart: always
     links:
-      - dynamodb:dynamodb
+      - floci:floci
       - django:django
       - flask:flask
     depends_on:
-      - dynamodb
+      - floci
       - django
       - flask
     build: .
     volumes:
       - .:/code/loadlamb
     env_file: .env
+    environment:
+      - DYNAMODB_ENDPOINT_URL=http://floci:4566
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    command: poetry run pytest loadlamb/chalicelib/tests/ -v
     working_dir: /code/loadlamb
 
   django:
@@ -48,20 +61,6 @@ services:
       - 8001:8001
     volumes:
       - .:/code/loadlamb
-    command: /root/.cache/pypoetry/virtualenvs/loadlamb-py3.6/bin/python manage.py runserver 0.0.0.0:8001
+    command: poetry run python manage.py runserver 0.0.0.0:8001
     env_file: .env
     working_dir: /code/loadlamb/loadlamb/chalicelib/tests/wsgi/djangor/
-
-  dynamodb:
-    image: instructure/dynamo-local-admin
-    restart: always
-    expose:
-      - "8002"
-    ports:
-      - 8002:8000
-    volumes:
-      - dynamodata:/var/lib/dynamo
-
-volumes:
-  dynamodata:
-    driver: local

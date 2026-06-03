@@ -38,7 +38,7 @@ def test_request_uses_params_kwarg_not_payload():
             MockResponse.return_value.assert_contains = AsyncMock()
             return await req.run()
 
-    asyncio.get_event_loop().run_until_complete(run())
+    asyncio.run(run())
 
     _, kwargs = mock_session.request.call_args
     assert 'payload' not in kwargs, (

@@ -44,7 +44,7 @@ def test_requests_per_second_uses_total_requests_not_users():
                 result = await group.run()
                 return mock_group_record
 
-    group_record = asyncio.get_event_loop().run_until_complete(run())
+    group_record = asyncio.run(run())
 
     rps = group_record.requests_per_second
     # With 4 users and 3 tasks each, rps should be based on 12 requests.

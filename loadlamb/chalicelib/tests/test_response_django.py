@@ -22,7 +22,7 @@ def test_response_body_read_once():
         ltr = await r.get_ltr()
         return ltr
 
-    ltr = asyncio.get_event_loop().run_until_complete(run())
+    ltr = asyncio.run(run())
     assert mock_resp.text.call_count == 1, (
         f'response.text() was called {mock_resp.text.call_count} times — must be called exactly once')
 
@@ -42,7 +42,7 @@ def test_response_body_stored_correctly():
         await r.assert_contains()
         return await r.get_ltr()
 
-    ltr = asyncio.get_event_loop().run_until_complete(run())
+    ltr = asyncio.run(run())
     assert ltr.body == 'actual body content', (
         f'Expected "actual body content" but got "{ltr.body}" — body was likely empty due to double read')
 
